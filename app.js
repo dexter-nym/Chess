@@ -15,7 +15,7 @@ let currentPlayer = "W";
 app.set("view engine", "ejs");
 app.use(express.static(path.join(__dirname, "public")));
 
-app.get("/", (rew, res) => {
+app.get("/", (req, res) => {
   res.render("index");
 });
 
@@ -24,7 +24,7 @@ io.on("connection", function (uniquesocket) {
 
   if (!players.white) {
     players.white = uniquesocket.id;
-    uniquesocket.emit("playerRole", "w");
+    uniquesocket.emit("playersRole", "w");
   } else if (!players.black) {
     players.black = uniquesocket.id;
     uniquesocket.emit("playersRole", "b");
@@ -32,7 +32,7 @@ io.on("connection", function (uniquesocket) {
     uniquesocket.emit("spectatorRole");
   }
 
-  uniquesocket.on("dissconnect", function () {
+  uniquesocket.on("disconnect", function () {
     if (uniquesocket.id === players.white) {
       delete players.white;
     } else if (uniquesocket.id === players.black) {
@@ -52,7 +52,7 @@ io.on("connection", function (uniquesocket) {
         io.emit("brodcastState", chess.fen());
       } else {
         console.log("Invalid move", move);
-        uniquesocket.id("invalidMove", move)
+        uniquesocket.emit("invalidMove", move);
       }
     } catch (error) {
       console.log(error);
