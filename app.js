@@ -10,7 +10,7 @@ const io = socket(server);
 
 const chess = new Chess();
 let players = {};
-let currentPlayer = "W";
+let currentPlayer = "w"; // Default to white as the starting player
 
 app.set("view engine", "ejs");
 app.use(express.static(path.join(__dirname, "public")));
@@ -24,10 +24,10 @@ io.on("connection", function (uniquesocket) {
 
   if (!players.white) {
     players.white = uniquesocket.id;
-    uniquesocket.emit("playersRole", "w");
+    uniquesocket.emit("playerRole", "w");
   } else if (!players.black) {
     players.black = uniquesocket.id;
-    uniquesocket.emit("playersRole", "b");
+    uniquesocket.emit("playerRole", "b");
   } else {
     uniquesocket.emit("spectatorRole");
   }
@@ -49,14 +49,14 @@ io.on("connection", function (uniquesocket) {
       if (result) {
         currentPlayer = chess.turn();
         io.emit("move", move);
-        io.emit("brodcastState", chess.fen());
+        io.emit("boardState", chess.fen()); // Corrected the event name
       } else {
         console.log("Invalid move", move);
         uniquesocket.emit("invalidMove", move);
       }
     } catch (error) {
       console.log(error);
-      uniquesocket.emit("Invalid move : ", move);
+      uniquesocket.emit("invalidMove", move); // Corrected the event name
     }
   });
 });
