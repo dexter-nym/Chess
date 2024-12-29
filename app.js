@@ -19,8 +19,46 @@ app.get("/", (rew, res) => {
   res.render("index");
 });
 
-io.on("connection", function (socket) {
+io.on("connection", function (uniquesocket) {
   console.log("connected");
+
+  if (!players.white) {
+    players.white = uniquesocket.id;
+    uniquesocket.emit("playerRole", "w");
+  } else if (!players.black) {
+    players.black = uniquesocket.id;
+    uniquesocket.emit("playersRole", "b");
+  } else {
+    uniquesocket.emit("spectatorRole");
+  }
+
+  uniquesocket.on("dissconnect", function () {
+    if (uniquesocket.id === players.white) {
+      delete players.white;
+    } else if (uniquesocket.id === players.black) {
+      delete players.black;
+    }
+  });
+
+  uniquesocket.on("move", (move) => {
+    try {
+      if (chess.turn() === "w" && uniquesocket.id !== players.white) return;
+      if (chess.turn() === "b" && uniquesocket.id !== players.black) return;
+
+      const result = chess.move(move);
+      if (result) {
+        currentPlayer = chess.turn();
+        io.emit("move", move);
+        io.emit("brodcastState", chess.fen());
+      } else {
+        console.log("Invalid move", move);
+        uniquesocket.id("invalidMove", move)
+      }
+    } catch (error) {
+      console.log(error);
+      uniquesocket.emit("Invalid move : ", move);
+    }
+  });
 });
 
 server.listen(3000, () => {
